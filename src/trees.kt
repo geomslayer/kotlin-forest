@@ -1,6 +1,9 @@
 import java.util.*
 
+val FOOD_APPEAR_PROBABILITY = 10
+
 class Tree {
+    val rand = Random()
     var foodCnt = 10
     var animals = HashSet<Animal>()
 
@@ -17,5 +20,11 @@ class Tree {
             throw IllegalAccessError("Food <= 0")
         }
         --foodCnt
+    }
+
+    fun process() {
+        if (rand.nextInt() % FOOD_APPEAR_PROBABILITY == 0) {
+            foodCnt += 10
+        }
     }
 }

@@ -5,8 +5,8 @@ val MOVE_TIME = 3
 val EAT_TIME = 3
 
 val PREGNANT_TIME = 200
-val LIFE_TIME = 3000
-val WITOUT_FOOD = 50
+val LIFE_TIME = 1000
+val WITHOUT_FOOD = 50
 val CHILDREN_CNT = 3
 
 val GO_PROBABILITY = 10
@@ -48,7 +48,7 @@ class Animal(val forest: Forest, val name: String) {
             return
         }
         if (fedTime <= 0) {
-            if (WITOUT_FOOD == -1 * fedTime) {
+            if (WITHOUT_FOOD == -1 * fedTime) {
                 die("hunger")
                 return
             }
@@ -61,7 +61,11 @@ class Animal(val forest: Forest, val name: String) {
                     } else {
                         partner.pregnant = PREGNANT_TIME
                     }
+                    break
                 }
+            }
+            if (rand.nextInt() % GO_PROBABILITY == 0) {
+                go()
             }
         }
     }
@@ -96,7 +100,7 @@ class Animal(val forest: Forest, val name: String) {
         curTree.moveOut(this)
         curTree = nextTree
         curTree.settle(this)
-        busy += 3
+        busy += MOVE_TIME
     }
 
     private fun die(reason: String) {

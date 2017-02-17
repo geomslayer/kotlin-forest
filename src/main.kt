@@ -27,6 +27,10 @@ class Forest {
     fun process() {
         ++time
 
+        for (tree in trees) {
+            tree.process()
+        }
+
         val toDelete = ArrayList<Animal>()
         for (animal in animals) {
             animal.process()
