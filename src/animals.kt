@@ -1,22 +1,30 @@
 import java.util.*
 
+val MALE = 0
+val FEMALE = 1
+
 val FOOD_VALUE = 50
 val MOVE_TIME = 3
 val EAT_TIME = 3
 
-val PREGNANT_TIME = 200
 val LIFE_TIME = 1000
+val PREGNANT_TIME = 200
 val WITHOUT_FOOD = 50
+
 val CHILDREN_CNT = 3
 
 val GO_PROBABILITY = 10
 
-val MALE = 0
-val FEMALE = 1
+enum class AnimalType {
+    SQUIRREL, CHIPMUNK, BADGER, FLY_SQUIRREL, WOODPECKER
+}
 
-class Animal(val forest: Forest, val name: String) {
+val TYPES = AnimalType.values().size
+
+class Animal(val forest: Forest, val type: AnimalType) : Comparable<Animal> {
     val rand = Random()
     val sex = rand.nextInt(2)
+    val name = (forest.lastAnimal++).toString()
 
     var curTree = getRandomTree()
     var lifetime = LIFE_TIME
@@ -38,7 +46,7 @@ class Animal(val forest: Forest, val name: String) {
         if (pregnant == 1) {
             val bornAnimals = ArrayList<Animal>()
             for (i in 1..CHILDREN_CNT) {
-                bornAnimals.add(Animal(forest, "$name->$i"))
+                bornAnimals.add(Animal(forest, type))
             }
             forest.populate(bornAnimals)
         }
@@ -55,7 +63,7 @@ class Animal(val forest: Forest, val name: String) {
             searchFood()
         } else if (wantChildren()) {
             for (partner in curTree.animals) {
-                if (partner.sex xor sex == 1 && partner.wantChildren()) {
+                if (partner.type == type && partner.sex xor sex == 1 && partner.wantChildren()) {
                     if (sex == FEMALE) {
                         pregnant = PREGNANT_TIME
                     } else {
@@ -71,16 +79,28 @@ class Animal(val forest: Forest, val name: String) {
     }
 
     fun searchFood() {
-        if (curTree.foodCnt > 0) {
-            curTree.eatOne()
-            feedMyself()
-        } else {
-            go()
+        for (fType in getFoodTypes()) {
+            if (curTree.tryEat(fType)) {
+                feedMyself()
+                return
+            }
         }
+        go()
     }
 
-    fun wantChildren() : Boolean {
-        return !dead && fedTime > 0 && pregnant == 0 && busy == 0;
+    fun wantChildren(): Boolean {
+        return !dead && fedTime > 0 && pregnant == 0 && busy == 0
+    }
+
+    private fun getFoodTypes(): List<FoodType> {
+        return when (type) {
+            AnimalType.SQUIRREL -> listOf(FoodType.CONE, FoodType.NUT)
+            AnimalType.CHIPMUNK -> listOf(FoodType.FALLEN_CONE, FoodType.FALLEN_NUT)
+            AnimalType.BADGER -> listOf(FoodType.ROOT)
+            AnimalType.FLY_SQUIRREL -> listOf(FoodType.MAPLE_LEAVE)
+            AnimalType.WOODPECKER -> listOf(FoodType.WORM)
+            else -> listOf(FoodType.WORM)
+        }
     }
 
     private fun feedMyself() {
@@ -107,4 +127,9 @@ class Animal(val forest: Forest, val name: String) {
         dead = true
         System.err.println("Animal $name died due to $reason")
     }
+
+    override fun compareTo(other: Animal): Int {
+        return name.compareTo(other.name)
+    }
+
 }

@@ -1,11 +1,21 @@
 import java.util.*
 
 val FOOD_APPEAR_PROBABILITY = 10
+val FOOD_AMOUNT = 5
 
-class Tree {
+enum class TreeType {
+    SPRUCE, PINE, OAK, BIRCH, MAPLE, WALNUT
+}
+
+enum class FoodType {
+    WORM, CONE, FALLEN_CONE, ROOT, NUT, FALLEN_NUT, MAPLE_LEAVE
+}
+
+open class Tree {
     val rand = Random()
-    var foodCnt = 10
-    var animals = HashSet<Animal>()
+    val type = TreeType.values()[rand.nextInt(TreeType.values().size)]
+    val food = HashMap<FoodType, Int>()
+    val animals = TreeSet<Animal>()
 
     fun settle(animal: Animal) {
         animals.add(animal)
@@ -15,16 +25,37 @@ class Tree {
         animals.remove(animal)
     }
 
-    fun eatOne() {
-        if (foodCnt <= 0) {
-            throw IllegalAccessError("Food <= 0")
+    fun tryEat(type: FoodType): Boolean {
+        val count = food.getOrDefault(type, 0)
+        if (count > 0) {
+            food[type] = count - 1
+            return true
         }
-        --foodCnt
+        return false
     }
 
     fun process() {
         if (rand.nextInt() % FOOD_APPEAR_PROBABILITY == 0) {
-            foodCnt += 10
+            increaseFood()
         }
     }
+
+    open fun increaseFood() {
+        food[FoodType.WORM] = food.getOrDefault(FoodType.WORM, 0) + FOOD_AMOUNT
+        food[FoodType.ROOT] = food.getOrDefault(FoodType.ROOT, 0) + FOOD_AMOUNT
+        when (type) {
+            TreeType.PINE -> {
+                food[FoodType.FALLEN_CONE] = food.getOrDefault(FoodType.FALLEN_CONE, 0) + food.getOrDefault(FoodType.CONE, 0)
+                food[FoodType.CONE] = FOOD_AMOUNT
+            }
+            TreeType.WALNUT -> {
+                food[FoodType.FALLEN_NUT] = food.getOrDefault(FoodType.FALLEN_NUT, 0) + food.getOrDefault(FoodType.NUT, 0)
+                food[FoodType.NUT] = FOOD_AMOUNT
+            }
+            TreeType.MAPLE -> {
+                food[FoodType.MAPLE_LEAVE] = food.getOrDefault(FoodType.MAPLE_LEAVE, 0) + FOOD_AMOUNT
+            }
+        }
+    }
+
 }

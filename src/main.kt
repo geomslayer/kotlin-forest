@@ -8,10 +8,13 @@ fun main(args: Array<String>) {
 }
 
 class Forest {
+    val rand = Random()
     var time = 0
     var hasLife = true
     var trees = ArrayList<Tree>()
     var animals = ArrayList<Animal>()
+
+    var lastAnimal = 1
 
     private val bornAnimals = ArrayList<Animal>()
 
@@ -20,7 +23,7 @@ class Forest {
             trees.add(Tree())
         }
         for (i in 1..animalCnt) {
-            animals.add(Animal(this, i.toString()))
+            animals.add(Animal(this, AnimalType.values()[rand.nextInt(TYPES)]))
         }
     }
 
@@ -54,4 +57,5 @@ class Forest {
     fun populate(bornAnimals: ArrayList<Animal>) {
         this.bornAnimals.addAll(bornAnimals)
     }
+
 }
