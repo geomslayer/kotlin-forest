@@ -4,14 +4,14 @@ val FOOD_APPEAR_PROBABILITY = 10
 val FOOD_AMOUNT = 5
 
 enum class TreeType {
-    SPRUCE, PINE, OAK, BIRCH, MAPLE, WALNUT
+    PINE, OAK, BIRCH, MAPLE, WALNUT
 }
 
 enum class FoodType {
     WORM, CONE, FALLEN_CONE, ROOT, NUT, FALLEN_NUT, MAPLE_LEAVE
 }
 
-open class Tree {
+open class Tree(val id: Int): Comparable<Tree> {
     val rand = Random()
     val type = TreeType.values()[rand.nextInt(TreeType.values().size)]
     val food = HashMap<FoodType, Int>()
@@ -41,21 +41,25 @@ open class Tree {
     }
 
     open fun increaseFood() {
-        food[FoodType.WORM] = food.getOrDefault(FoodType.WORM, 0) + FOOD_AMOUNT
-        food[FoodType.ROOT] = food.getOrDefault(FoodType.ROOT, 0) + FOOD_AMOUNT
+        food[FoodType.WORM] = FOOD_AMOUNT
+        food[FoodType.ROOT] = FOOD_AMOUNT
         when (type) {
             TreeType.PINE -> {
-                food[FoodType.FALLEN_CONE] = food.getOrDefault(FoodType.FALLEN_CONE, 0) + food.getOrDefault(FoodType.CONE, 0)
+                food[FoodType.FALLEN_CONE] = Math.min(FOOD_AMOUNT, food.getOrDefault(FoodType.FALLEN_CONE, 0) + food.getOrDefault(FoodType.CONE, 0))
                 food[FoodType.CONE] = FOOD_AMOUNT
             }
             TreeType.WALNUT -> {
-                food[FoodType.FALLEN_NUT] = food.getOrDefault(FoodType.FALLEN_NUT, 0) + food.getOrDefault(FoodType.NUT, 0)
+                food[FoodType.FALLEN_NUT] = Math.min(FOOD_AMOUNT, food.getOrDefault(FoodType.FALLEN_NUT, 0) + food.getOrDefault(FoodType.NUT, 0))
                 food[FoodType.NUT] = FOOD_AMOUNT
             }
             TreeType.MAPLE -> {
-                food[FoodType.MAPLE_LEAVE] = food.getOrDefault(FoodType.MAPLE_LEAVE, 0) + FOOD_AMOUNT
+                food[FoodType.MAPLE_LEAVE] = FOOD_AMOUNT
             }
         }
+    }
+
+    override fun compareTo(other: Tree): Int {
+        return id.compareTo(other.id)
     }
 
 }

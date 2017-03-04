@@ -12,23 +12,25 @@ val PREGNANT_TIME = 200
 val WITHOUT_FOOD = 50
 
 val CHILDREN_CNT = 3
+val PRED_CHILDREN_CNT = 1
 
 val GO_PROBABILITY = 10
 
 enum class AnimalType {
-    SQUIRREL, CHIPMUNK, BADGER, FLY_SQUIRREL, WOODPECKER
+    SQUIRREL, CHIPMUNK, BADGER, FLY_SQUIRREL, WOODPECKER, WOLF, EAGLE
 }
 
 val TYPES = AnimalType.values().size
 
-class Animal(val forest: Forest, val type: AnimalType) : Comparable<Animal> {
+
+open class Animal(val forest: Forest, val type: AnimalType) : Comparable<Animal> {
     val rand = Random()
     val sex = rand.nextInt(2)
     val name = (forest.lastAnimal++).toString()
 
     var curTree = getRandomTree()
     var lifetime = LIFE_TIME
-    var fedTime = FOOD_VALUE
+    var fedTime = 0
     var busy = 0
     var pregnant = 0
     var dead = false
@@ -44,9 +46,10 @@ class Animal(val forest: Forest, val type: AnimalType) : Comparable<Animal> {
         pregnant = Math.max(0, pregnant - 1)
 
         if (pregnant == 1) {
-            val bornAnimals = ArrayList<Animal>()
-            for (i in 1..CHILDREN_CNT) {
-                bornAnimals.add(Animal(forest, type))
+            val bornAnimals = ArrayList<Animal>()       // рожает потомство
+            val cnt = if (isPredator(type)) PRED_CHILDREN_CNT else CHILDREN_CNT
+            for (i in 1..cnt) {
+                bornAnimals.add(newAnimal(forest, type))
             }
             forest.populate(bornAnimals)
         }
@@ -55,7 +58,7 @@ class Animal(val forest: Forest, val type: AnimalType) : Comparable<Animal> {
             die("old age")
             return
         }
-        if (fedTime <= 0) {
+        if (fedTime <= 0) {     // если животное голодно
             if (WITHOUT_FOOD == -1 * fedTime) {
                 die("hunger")
                 return
@@ -78,7 +81,7 @@ class Animal(val forest: Forest, val type: AnimalType) : Comparable<Animal> {
         }
     }
 
-    fun searchFood() {
+    open fun searchFood() {
         for (fType in getFoodTypes()) {
             if (curTree.tryEat(fType)) {
                 feedMyself()
@@ -103,7 +106,7 @@ class Animal(val forest: Forest, val type: AnimalType) : Comparable<Animal> {
         }
     }
 
-    private fun feedMyself() {
+    protected fun feedMyself() {
         busy += EAT_TIME
         fedTime += FOOD_VALUE
     }
@@ -112,24 +115,60 @@ class Animal(val forest: Forest, val type: AnimalType) : Comparable<Animal> {
         return forest.trees[rand.nextInt(forest.trees.size)]
     }
 
-    private fun go() {
-        var nextTree: Tree
-        do {
-            nextTree = getRandomTree()
-        } while (curTree === nextTree)
+    protected fun go() {
+        val nextTree = forest.getAdjacentTree(curTree)
         curTree.moveOut(this)
         curTree = nextTree
         curTree.settle(this)
         busy += MOVE_TIME
     }
 
-    private fun die(reason: String) {
+    fun die(reason: String) {
         dead = true
-        System.err.println("Animal $name died due to $reason")
+//        System.err.println("Animal $name died due to $reason")
     }
 
     override fun compareTo(other: Animal): Int {
         return name.compareTo(other.name)
     }
 
+}
+
+class Predator(forest: Forest, type: AnimalType) : Animal(forest, type) {
+    override fun searchFood() {
+        for (animal in curTree.animals) {
+            if (animal.dead) {
+                continue
+            }
+            when (type) {
+                AnimalType.EAGLE -> when (animal.type) {
+                    AnimalType.WOODPECKER, AnimalType.FLY_SQUIRREL -> {
+                        animal.die("was eaten")
+                        feedMyself()
+                        return
+                    }
+                }
+                AnimalType.WOLF -> when (animal.type) {
+                    AnimalType.CHIPMUNK, AnimalType.SQUIRREL, AnimalType.BADGER -> {
+                        animal.die("was eaten")
+                        feedMyself()
+                        return
+                    }
+                }
+            }
+        }
+        go()
+    }
+
+}
+
+fun newAnimal(forest: Forest, type: AnimalType): Animal {
+    return when (type) {
+        AnimalType.EAGLE, AnimalType.WOLF -> Predator(forest, type)
+        else -> Animal(forest, type)
+    }
+}
+
+fun isPredator(type: AnimalType): Boolean {
+    return type == AnimalType.EAGLE || type == AnimalType.WOLF
 }
